@@ -48,7 +48,9 @@ export const forgotPassword = async (req, res) => {
     const resetToken = user.getResetPasswordToken();
     await user.save({ validateBeforeSave: false });
 
-    const resetUrl = `${req.protocol}://${req.get('host')}/api/auth/reset-password/${resetToken}`;
+    const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
+
+    const resetUrl = `${CLIENT_URL}/reset-password/${resetToken}`;
     const message = `You requested a password reset. Click the link below to reset your password:\n\n${resetUrl}\n\nIf you did not request this, please ignore this email.`;
 
     await sendEmail({ email: user.email, subject: 'Password Reset Request', message });
@@ -124,10 +126,10 @@ export const login = async (req, res) => {
 };
 
 export const register = async (req, res) => {
-  const { name, email, password, phoneNumber } = req.body;
+  const { name, email, password } = req.body;
 
   try {
-    if (!validateFields({ name, email, password, phoneNumber }, res)) return;
+    if (!validateFields({ name, email, password }, res)) return;
 
     if (password.length < 6) {
       return sendErrorResponse(res, 400, 'Password must be at least 6 characters');
@@ -138,7 +140,7 @@ export const register = async (req, res) => {
       return sendErrorResponse(res, 400, 'Email already in use');
     }
 
-    const newUser = await User.create({ name, email, password, phoneNumber });
+    const newUser = await User.create({ name, email, password });
     const token = signToken(newUser._id);
     setCookie(res, token);
 
